@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Today's Top Hotel Deals{% endblock %}
+
+{% block content %}
+    
+    <h1 class="text-4xl font-extrabold text-gray-900 mb-10 text-center">
+        🔥 Exclusive Hotel Deals Today
+    </h1>
+    
+    <!-- Simple Message Box for Button Click -->
+    <div id="messageBox" class="fixed top-4 right-4 p-4 bg-indigo-100 text-indigo-700 font-semibold rounded-lg shadow-xl z-50 hidden transition transform duration-300"></div>
+
+    {% comment %}
+    In a real Django view (views.py), you would pass a context object like this:
+    The new structure requires 'price_options' to be a list of booking options.
+    {% endcomment %}
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="hotel-deals-container">
+        
+        {% for card_data in hotel_deals %}
+            <!-- The Magic of Reusable Components: template inclusion -->
+            {% include "components/hotel_card.html" with card_data=card_data %}
+        {% empty %}
+            <p class="text-center text-gray-500 col-span-full">No hotel deals found today.</p>
+        {% endfor %}
+
+        <!-- Mock data will be rendered here via JavaScript -->
+        
+    </div>
+
+    <!-- Custom component includes the necessary templates and mock logic -->
+    {% include "components/hotel_card_mock.html" %}
+
+    <script>
+        // Simple function to display a message instead of using alert()
+        window.showMessage = function(text) {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = text;
+            messageBox.classList.remove('hidden', 'translate-x-full');
+            messageBox.classList.add('translate-x-0');
+
+            setTimeout(() => {
+                messageBox.classList.add('translate-x-full');
+                setTimeout(() => messageBox.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        // --- Core Rendering Functions moved here to ensure they are defined before being called ---
+        window.calculatePriceCard = function(card) {
+            const price = parseFloat(card.dataset.originalPrice);
+            const rebatePercent = parseFloat(card.dataset.rebatePercent);
+            
+            if (isNaN(price) || isNaN(rebatePercent)) return;
+
+            // Mock arithmetic functions (normally handled by Django template filters)
+            const multiply = (a, b) => a * b;
+            const divide = (a, b) => a / b;
+            const subtract = (a, b) => a - b;
+            const floatformat = (value, decimalPlaces) => parseFloat(value).toFixed(decimalPlaces);
+
+            // 1. Calculate Rebate Amount
+            const rebateAmount = floatformat(divide(multiply(price, rebatePercent), 100), 2);
+            
+            // 2. Calculate Final Price
+            const finalPrice = floatformat(subtract(price, rebateAmount), 2);
+            
+            // 3. Update DOM elements
+            card.querySelector('[data-rebate-amount]').textContent = `- $${rebateAmount}`;
+            card.querySelector('[data-final-price]').textContent = `$${finalPrice}`;
+            card.querySelector('[data-original-price-display]').textContent = `$${floatformat(price, 2)}`;
+        }
+
+        window.renderMockDeals = function(mockDeals, container, priceCardTemplate, hotelCardTemplate) {
+            if (!container || !priceCardTemplate || !hotelCardTemplate) return;
+
+            mockDeals.forEach(hotelDeal => {
+                // 1. Render Outer Hotel Card
+                let hotelHtml = hotelCardTemplate.innerHTML;
+                for (const key in hotelDeal) {
+                    if (typeof hotelDeal[key] === 'string') {
+                        const regex = new RegExp(`{${key}}`, 'g');
+                        hotelHtml = hotelHtml.replace(regex, hotelDeal[key]);
+                    }
+                }
+                
+                const tempHotelDiv = document.createElement('div');
+                tempHotelDiv.innerHTML = hotelHtml;
+                const renderedHotelCard = tempHotelDiv.firstChild;
+
+                const priceContainer = renderedHotelCard.querySelector('[data-price-options-container]');
+                
+                if (priceContainer && Array.isArray(hotelDeal.price_options)) {
+                    // 2. Render Inner Price Cards (Looping)
+                    hotelDeal.price_options.forEach(priceOption => {
+                        let priceHtml = priceCardTemplate.innerHTML;
+                        
+                        for (const key in priceOption) {
+                             const regex = new RegExp(`{${key}}`, 'g');
+                             priceHtml = priceHtml.replace(regex, priceOption[key]);
+                        }
+                        
+                        priceHtml = priceHtml.replace(/{name}/g, hotelDeal.name);
+
+                        const tempPriceDiv = document.createElement('div');
+                        tempPriceDiv.innerHTML = priceHtml;
+                        const renderedPriceCard = tempPriceDiv.firstChild;
+
+                        // 3. Run Calculations on the rendered Price Card
+                        window.calculatePriceCard(renderedPriceCard);
+
+                        priceContainer.appendChild(renderedPriceCard);
+                    });
+                }
+
+                container.appendChild(renderedHotelCard);
+            });
+        }
+        // --- End of Core Rendering Functions ---
+
+
+        // --- Mock Data Structure for Single-File Execution ---
+        const mockDeals = [
+            {
+                'name': 'The Skyline Resort',
+                'image_url': 'https://placehold.co/600x400/5C7C9E/ffffff?text=Skyline',
+                'price_options': [
+                    {'type': 'Standard Rate', 'original_price': 249.99, 'rebate_percent': 20},
+                    {'type': 'Non-refundable', 'original_price': 239.99, 'rebate_percent': 25},
+                    {'type': 'Member Exclusive', 'original_price': 260.00, 'rebate_percent': 30},
+                ]
+            },
+            {
+                'name': 'Beachside Bungalows',
+                'image_url': 'https://placehold.co/600x400/77987C/ffffff?text=Beachside',
+                'price_options': [
+                    {'type': 'Standard Rate', 'original_price': 150.00, 'rebate_percent': 15},
+                    {'type': 'Non-refundable', 'original_price': 145.00, 'rebate_percent': 20},
+                ]
+            },
+            {
+                'name': 'Mountain Retreat Lodge',
+                'image_url': 'https://placehold.co/600x400/D0A39C/ffffff?text=Mountain',
+                'price_options': [
+                    {'type': 'Standard Rate', 'original_price': 310.50, 'rebate_percent': 10},
+                    {'type': 'Weekend Special', 'original_price': 320.00, 'rebate_percent': 20},
+                ]
+            },
+        ];
+
+        // Execute the mock rendering logic after the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('hotel-deals-container');
+            const priceCardTemplate = document.getElementById('price-card-template');
+            const hotelCardTemplate = document.getElementById('hotel-card-template');
+
+            // This call now succeeds because the function is defined above.
+            window.renderMockDeals(mockDeals, container, priceCardTemplate, hotelCardTemplate);
+        });
+    </script>
+{% endblock %}

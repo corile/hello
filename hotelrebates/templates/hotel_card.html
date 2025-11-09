@@ -1,0 +1,26 @@
+{% block title %}Today's Top Hotel Deals{% endblock %}
+
+<h1>{{ hotel_name }}</h1>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Calculate</button>
+</form>
+
+{% for price_option in price_options %}
+{% include "price_card.html" with price_option=price_option %}
+<p></p>
+{% endfor %}
+
+<fieldset class="checkbox-filter filter-column-6">
+    <legend>Consumer or Business Card</legend>
+    <label class="checkbox-business">
+        <input type="checkbox" value="Business" data-checked-value="true">
+        Business
+    </label>
+    <label class="checkbox-consumer">
+        <input type="checkbox" value="Consumer" data-checked-value="true">
+        Consumer
+    </label>
+</fieldset>
