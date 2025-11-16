@@ -6,6 +6,7 @@ from hotelrebates.creditcards import credit_card_engine
 from hotelrebates.currency import currency_engine
 from hotelrebates.forms import CalcForm
 from hotelrebates.hotelloyalty import hotel_loyalty_rule_engine, marriott_rules, choice_rules
+from hotelrebates.ota import ota_engine
 
 logger = logging.getLogger(__name__)
 
@@ -27,26 +28,40 @@ def calc (request):
             brand = form.cleaned_data['brand']
             nights = form.cleaned_data['nights']
             logger.debug(f"Cleaned data: corporation={corporation_name}, brand={brand}, nights={nights}, cash_price={cash_price}")
-            rebates, hotel_loyalty_currency_id = hotel_loyalty_rule_engine.calculate_base_points(
-                hotel_corporation=corporation_name,
-                hotel_brand=brand,
-                room_rate=float(cash_price),
-                taxes=0,
-                number_of_nights=nights
-            )
-            logger.info(f"Calculated rebates={rebates} for {corporation_name}/{brand}")
-            hotel_rebates_value_in_cents = currency_engine.calculate_points_value_in_cents(hotel_loyalty_currency_id, rebates)
+
+            hotel_loyalty_base_points, hotel_rebates_value_in_cents = calculate_hotel_loyalty_base_points_and_value(request, corporation_name, brand, cash_price, nights)
 
             price_options = []
-
             all_credit_cards = credit_card_engine.get_all_credit_cards()
+            all_travel_agencies = ota_engine.get_all_travel_agencies()
+
+            for travel_agency in all_travel_agencies:
+                for credit_card in all_credit_cards:
+                    cc_rebates, cc_currency_id = credit_card_engine.calculate_credit_card_points(
+                        credit_card_name=credit_card.card_name,
+                        amount_spent_dollars=cash_price * nights,
+                        hotel_corporation=corporation_name,
+                        traveL_agency=travel_agency.name
+                    )
+                    cc_rebates_value_in_cents = currency_engine.calculate_points_value_in_cents(cc_currency_id, cc_rebates)
+                    final_price = (float(cash_price) * nights) - (cc_rebates_value_in_cents / 100)
+                    price_options.append({
+                        'booking_channel': travel_agency.name,
+                        'cash_price': f'${float(cash_price) * nights:.2f}',
+                        'hotel_rebates_value': 'No hotel rebates for OTA bookings',
+                        'hotel_rebates': '',
+                        'credit_card_rebates_value': f'${cc_rebates_value_in_cents / 100:.2f}',
+                        'credit_card_rebates': f'({cc_rebates} {credit_card.earn_currency.name} with {credit_card.card_name})',
+                        'final_price': f'${final_price:.2f}',
+                        'final_price_for_sorting': final_price
+                    })
 
             for credit_card in all_credit_cards:
                 cc_rebates, cc_currency_id = credit_card_engine.calculate_credit_card_points(
                     credit_card_name=credit_card.card_name,
                     amount_spent_dollars=cash_price * nights,
                     hotel_corporation=corporation_name,
-                    travel_portal=None
+                    traveL_agency=None
                 )
                 cc_rebates_value_in_cents = currency_engine.calculate_points_value_in_cents(cc_currency_id, cc_rebates)
                 final_price = (float(cash_price) * nights) - (hotel_rebates_value_in_cents / 100) - (cc_rebates_value_in_cents / 100)
@@ -54,7 +69,7 @@ def calc (request):
                     'booking_channel': f'Direct with {corporation_name}',
                     'cash_price': f'${float(cash_price) * nights:.2f}',
                     'hotel_rebates_value': f'${hotel_rebates_value_in_cents / 100:.2f}',
-                    'hotel_rebates': f'({rebates} points)',
+                    'hotel_rebates': f'({hotel_loyalty_base_points} points)',
                     'credit_card_rebates_value': f'${cc_rebates_value_in_cents / 100:.2f}',
                     'credit_card_rebates': f'({cc_rebates} {credit_card.earn_currency.name} with {credit_card.card_name})',
                     'final_price': f'${final_price:.2f}',
@@ -72,6 +87,18 @@ def calc (request):
         else:
             logger.warning(f"Form validation failed: {form.errors}")
     return render(request, 'hotel_card.html', {'form': form})
+
+def calculate_hotel_loyalty_base_points_and_value(request, corporation_name, brand, cash_price, nights):
+    hotel_loyalty_base_points, hotel_loyalty_currency_id = hotel_loyalty_rule_engine.calculate_base_points(
+                    hotel_corporation=corporation_name,
+                    hotel_brand=brand,
+                    room_rate=float(cash_price),
+                    taxes=0,
+                    number_of_nights=nights
+                )
+    logger.info(f"Calculated rebates={hotel_loyalty_base_points} for {corporation_name}/{brand}")
+    hotel_rebates_value_in_cents = currency_engine.calculate_points_value_in_cents(hotel_loyalty_currency_id, hotel_loyalty_base_points)
+    return hotel_loyalty_base_points, hotel_rebates_value_in_cents
 
 def ajaxBrandField(request):
     logger.info("ajaxBrandField called")

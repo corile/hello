@@ -35,18 +35,21 @@ class CreditCard(models.Model):
     earn_currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
 
     # Earn rate at all general hotels
-    general_hotel_points_per_dollar = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
+    general_hotel_points_per_dollar = models.DecimalField(max_digits=5, decimal_places=3, null=True, blank=True)
 
     # Earn bonus points for specific hotel corporation
     hotel_corporation = models.ForeignKey(HotelCorporation, on_delete=models.CASCADE, null=True, blank=True)
-    hotel_corporation_points_per_dollar = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
+    hotel_corporation_points_per_dollar = models.DecimalField(max_digits=5, decimal_places=3, null=True, blank=True)
     hotel_corporation_points_per_stay = models.IntegerField(null=True, blank=True)
+
+    # Earn bonus points for booking through any online travel agency
+    ota_points_per_dollar = models.DecimalField(max_digits=5, decimal_places=3, null=True, blank=True)
     
     # Earn bonus points for bookings made via specific travel portal
-    travel_portal_points_per_dollar = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
+    travel_portal_points_per_dollar = models.DecimalField(max_digits=5, decimal_places=3, null=True, blank=True)
     travel_portal = models.ForeignKey(TravelAgency, on_delete=models.CASCADE, null=True, blank=True)
 
     # Earn bonus points on all other purchases
-    everywhere_points_per_dollar = models.DecimalField(max_digits=3, decimal_places=1, null=False, blank=False)
+    everywhere_points_per_dollar = models.DecimalField(max_digits=5, decimal_places=3, null=False, blank=False)
     def __str__(self):
         return f"{self.card_name} ({self.bank.name})"
