@@ -1,9 +1,10 @@
 from django.contrib import admin
 
-from hotelrebates.models import Bank, CreditCard, HotelCorporation, TravelAgency, Currency
+from hotelrebates.models import Bank, CreditCard, HotelCorporation, HotelEliteStatus, TravelAgency, Currency
 
 # Register your models here.
 admin.site.register(HotelCorporation)
+admin.site.register(HotelEliteStatus)
 admin.site.register(Bank)
 admin.site.register(Currency)
 admin.site.register(CreditCard)

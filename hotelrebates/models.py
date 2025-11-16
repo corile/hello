@@ -9,6 +9,14 @@ class HotelCorporation(models.Model):
     def __str__(self):
         return self.name
     
+class HotelEliteStatus(models.Model):
+    corporation = models.ForeignKey(HotelCorporation, on_delete=models.CASCADE)
+    status_name = models.CharField(max_length=100)
+    points_earning_bonus_percent = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.status_name} ({self.corporation.name})"
+
 class Bank(models.Model):
     name = models.CharField(max_length=100)
     currency = models.ForeignKey('Currency', on_delete=models.CASCADE, null=True)

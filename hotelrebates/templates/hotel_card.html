@@ -26,9 +26,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.text();
             })
             .then(html => {
+                const parser = new DOMParser();
+                const htmlDocument = parser.parseFromString(html, "text/html");
+                
                 // Replace brand field markup with returned HTML fragment
                 const container = document.querySelector('#id_brand');
-                if (container) container.outerHTML = html;
+                if (container) container.outerHTML = htmlDocument.documentElement.querySelector('#id_brand').outerHTML;
+
+                const eliteContainer = document.querySelector('#id_elite_status');
+                if (eliteContainer) eliteContainer.outerHTML = htmlDocument.documentElement.querySelector('#id_elite_status').outerHTML;
             })
             .catch(err => console.error('Error fetching brand field:', err));
     });

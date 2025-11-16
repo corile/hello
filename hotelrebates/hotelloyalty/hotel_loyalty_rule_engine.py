@@ -1,5 +1,5 @@
 from hotelrebates.hotelloyalty import hilton_rules, hyatt_rules, ihg_rules, marriott_rules, choice_rules, wyndham_rules
-from hotelrebates.models import Currency, HotelCorporation
+from hotelrebates.models import Currency, HotelCorporation, HotelEliteStatus
 import logging
 
 loyalty_rules_map = {
@@ -34,7 +34,27 @@ def calculate_base_points(hotel_corporation, hotel_brand, room_rate, taxes, numb
             return rule.calculate_base_points(room_rate, taxes, number_of_nights), hotel_corporation_obj.currency.id
     return (0, 0)
 
+def calculate_bonus_points(hotel_corporation, elite_status_name, base_points_earned) -> int:
+    hotel_elite_status_obj = HotelEliteStatus.objects.filter(
+        corporation__name=hotel_corporation,
+        status_name=elite_status_name
+    ).first()
+    if hotel_elite_status_obj:
+        bonus_points = int((hotel_elite_status_obj.points_earning_bonus_percent * base_points_earned) / 100)
+        logging.info(f"Awarding {bonus_points} bonus points for elite status '{elite_status_name}' at '{hotel_corporation}'.")
+        return bonus_points
+    return 0
+
 def get_brands_for_corporation(hotel_corporation):
     if hotel_corporation in hotel_brands_map:
         return [(brand, brand) for brand in hotel_brands_map[hotel_corporation]]
     return []
+
+def get_elite_levels_for_corporation(hotel_corporation):
+    try:
+        corporation = HotelCorporation.objects.get(name=hotel_corporation)
+        elite_statuses = HotelEliteStatus.objects.filter(corporation=corporation)
+        return [(status.status_name, status.status_name) for status in elite_statuses]
+    except HotelCorporation.DoesNotExist:
+        logging.warning(f"Hotel corporation '{hotel_corporation}' does not exist.")
+        return []

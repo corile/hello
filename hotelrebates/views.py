@@ -18,7 +18,8 @@ def calc (request):
         corporation_id = request.POST.get('corporation')
         corporation_name = CalcForm().fields['corporation'].queryset.get(id=corporation_id).name
         brands = hotel_loyalty_rule_engine.get_brands_for_corporation(corporation_name)
-        form = CalcForm(request.POST, brand_choices=brands)
+        elite_levels = hotel_loyalty_rule_engine.get_elite_levels_for_corporation(corporation_name)
+        form = CalcForm(request.POST, brand_choices=brands, elite_levels=elite_levels)
         logger.info(form.errors)
         if form.is_valid():
             logger.info("Form is valid, processing reservation")
@@ -29,7 +30,14 @@ def calc (request):
             nights = form.cleaned_data['nights']
             logger.debug(f"Cleaned data: corporation={corporation_name}, brand={brand}, nights={nights}, cash_price={cash_price}")
 
-            hotel_loyalty_base_points, hotel_rebates_value_in_cents = calculate_hotel_loyalty_base_points_and_value(request, corporation_name, brand, cash_price, nights)
+            elite_status_name = form.cleaned_data['elite_status']
+            hotel_loyalty_points, hotel_rebates_value_in_cents = calculate_hotel_loyalty_points_and_value(
+                request, 
+                corporation_name, 
+                brand, 
+                elite_status_name, 
+                cash_price, 
+                nights)
 
             price_options = []
             all_credit_cards = credit_card_engine.get_all_credit_cards()
@@ -69,7 +77,7 @@ def calc (request):
                     'booking_channel': f'Direct with {corporation_name}',
                     'cash_price': f'${float(cash_price) * nights:.2f}',
                     'hotel_rebates_value': f'${hotel_rebates_value_in_cents / 100:.2f}',
-                    'hotel_rebates': f'({hotel_loyalty_base_points} points)',
+                    'hotel_rebates': f'({hotel_loyalty_points} {corporation_name} points)',
                     'credit_card_rebates_value': f'${cc_rebates_value_in_cents / 100:.2f}',
                     'credit_card_rebates': f'({cc_rebates} {credit_card.earn_currency.name} with {credit_card.card_name})',
                     'final_price': f'${final_price:.2f}',
@@ -88,7 +96,7 @@ def calc (request):
             logger.warning(f"Form validation failed: {form.errors}")
     return render(request, 'hotel_card.html', {'form': form})
 
-def calculate_hotel_loyalty_base_points_and_value(request, corporation_name, brand, cash_price, nights):
+def calculate_hotel_loyalty_points_and_value(request, corporation_name, brand, elite_status_name, cash_price, nights):
     hotel_loyalty_base_points, hotel_loyalty_currency_id = hotel_loyalty_rule_engine.calculate_base_points(
                     hotel_corporation=corporation_name,
                     hotel_brand=brand,
@@ -96,18 +104,28 @@ def calculate_hotel_loyalty_base_points_and_value(request, corporation_name, bra
                     taxes=0,
                     number_of_nights=nights
                 )
-    logger.info(f"Calculated rebates={hotel_loyalty_base_points} for {corporation_name}/{brand}")
-    hotel_rebates_value_in_cents = currency_engine.calculate_points_value_in_cents(hotel_loyalty_currency_id, hotel_loyalty_base_points)
-    return hotel_loyalty_base_points, hotel_rebates_value_in_cents
+    hotel_loyalty_bonus_points = hotel_loyalty_rule_engine.calculate_bonus_points(
+                    hotel_corporation=corporation_name,
+                    elite_status_name=elite_status_name,
+                    base_points_earned=hotel_loyalty_base_points
+                )
+    hotel_loyalty_points = hotel_loyalty_base_points + hotel_loyalty_bonus_points
+    logger.info(f"Calculated rebates={hotel_loyalty_points} for {corporation_name}/{brand}")
+    hotel_rebates_value_in_cents = currency_engine.calculate_points_value_in_cents(hotel_loyalty_currency_id, hotel_loyalty_points)
+    return hotel_loyalty_points, hotel_rebates_value_in_cents
 
 def ajaxBrandField(request):
     logger.info("ajaxBrandField called")
     corporation_name = request.GET.get('corporation')
     logger.debug(f"corporation_name from GET: {corporation_name}")
+
     # Ensure the brand field exists and set choices returned by the rule engine.
     brands = hotel_loyalty_rule_engine.get_brands_for_corporation(corporation_name)
     logger.debug(f"Retrieved {len(brands)} brands for {corporation_name}")
 
+    elite_levels = hotel_loyalty_rule_engine.get_elite_levels_for_corporation(corporation_name)
+    logger.debug(f"Retrieved {len(elite_levels)} elite levels for {corporation_name}")
+
     # Render as a select so the returned fragment contains a visible <select>.
-    form = CalcForm(brand_choices=brands)
+    form = CalcForm(brand_choices=brands, elite_levels=elite_levels)
     return render(request, 'brand_field.html', {'form': form})
