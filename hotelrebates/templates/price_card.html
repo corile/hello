@@ -1,13 +1,21 @@
 {% load static %}
 
-<fieldset class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-    <div class="flex justify-between">
+<tr>
+    <td class="flex justify-between">
+        {{ price_option.booking_channel }}
+    </td>
+    <td class="flex justify-between">
         {{ price_option.cash_price }}
-    </div>
-    <div class="flex justify-between">
-        {{ price_option.rebates }}
-    </div>
-    <div class="flex justify-between">
+    </td>
+    <td class="flex justify-between">
+        {{ price_option.hotel_rebates_value }}<br>
+        {{ price_option.hotel_rebates }}
+    </td>
+    <td class="flex justify-between">
+        {{ price_option.credit_card_rebates_value }}<br>
+        {{ price_option.credit_card_rebates }}
+    </td>
+    <td class="flex justify-between">
         {{ price_option.final_price }}
-    </div>
-</fieldset>
+    </td>
+</tr>

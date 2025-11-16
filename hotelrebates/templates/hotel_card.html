@@ -2,25 +2,53 @@
 
 <h1>{{ hotel_name }}</h1>
 
-<form method="post">
+<form method="post" id="calc-form">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit">Calculate</button>
 </form>
 
-{% for price_option in price_options %}
-{% include "price_card.html" with price_option=price_option %}
-<p></p>
-{% endfor %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const corpSelect = document.querySelector('#id_corporation');
+    if (!corpSelect) return;
 
-<fieldset class="checkbox-filter filter-column-6">
-    <legend>Consumer or Business Card</legend>
-    <label class="checkbox-business">
-        <input type="checkbox" value="Business" data-checked-value="true">
-        Business
-    </label>
-    <label class="checkbox-consumer">
-        <input type="checkbox" value="Consumer" data-checked-value="true">
-        Consumer
-    </label>
-</fieldset>
+    corpSelect.addEventListener('change', function() {
+        // Send the selected corporation name (the visible text) so
+        // the server can return brands for that corporation.
+        const selectedText = corpSelect.options[corpSelect.selectedIndex].text;
+        const params = new URLSearchParams({ corporation: selectedText });
+        const url = window.location.origin + '{% url "ajax_brand_field" %}' + '?' + params.toString();
+
+        fetch(url, { method: 'GET', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.text();
+            })
+            .then(html => {
+                // Replace brand field markup with returned HTML fragment
+                const container = document.querySelector('#id_brand');
+                if (container) container.outerHTML = html;
+            })
+            .catch(err => console.error('Error fetching brand field:', err));
+    });
+});
+</script>
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Booking Channel</th>
+            <th>Total Cash Price</th>
+            <th>Hotel Points Earned</th>
+            <th>Credit Card Points Earned</th>
+            <th>Net Cost After Rebate</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for price_option in price_options %}
+        {% include "price_card.html" with price_option=price_option %}
+        {% endfor %}
+    </tbody>
+</table>
