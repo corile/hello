@@ -45,6 +45,9 @@ def calculate_bonus_points(hotel_corporation, elite_status_name, base_points_ear
         return bonus_points
     return 0
 
+def get_all_hotel_corporations():
+    return HotelCorporation.objects.all()
+
 def get_brands_for_corporation(hotel_corporation):
     if hotel_corporation in hotel_brands_map:
         return [(brand, brand) for brand in hotel_brands_map[hotel_corporation]]

@@ -1,5 +1,122 @@
 {% block title %}Today's Top Hotel Deals{% endblock %}
 
+<style>
+    :root {
+        --bg-color: #ffffff;
+        --text-color: #000000;
+        --border-color: #cccccc;
+        --button-bg: #f0f0f0;
+        --button-hover-bg: #e0e0e0;
+        --table-header-bg: #f9f9f9;
+        --table-border: #ddd;
+    }
+
+    body.dark-mode {
+        --bg-color: #1e1e1e;
+        --text-color: #e0e0e0;
+        --border-color: #444444;
+        --button-bg: #333333;
+        --button-hover-bg: #444444;
+        --table-header-bg: #2a2a2a;
+        --table-border: #444444;
+    }
+
+    body {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        transition: background-color 0.3s, color 0.3s;
+        font-family: Arial, sans-serif;
+        padding: 16px;
+    }
+
+    #theme-toggle {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 15px;
+        background-color: var(--button-bg);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 12px;
+        z-index: 1000;
+        transition: background-color 0.3s;
+    }
+
+    #theme-toggle:hover {
+        background-color: var(--button-hover-bg);
+    }
+
+    h1 {
+        color: var(--text-color);
+    }
+
+    form {
+        background-color: var(--button-bg);
+        padding: 12px;
+        border-radius: 5px;
+        margin: 20px 0;
+        border: 1px solid var(--border-color);
+    }
+
+    input, select, textarea {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        padding: 5px;
+        border-radius: 3px;
+    }
+
+    button {
+        background-color: var(--button-bg);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        padding: 6px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    button:hover {
+        background-color: var(--button-hover-bg);
+    }
+
+    button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        border: 1px solid var(--table-border);
+    }
+
+    table thead {
+        background-color: var(--table-header-bg);
+    }
+
+    table th, table td {
+        border: 1px solid var(--table-border);
+        padding: 5px;
+        text-align: left;
+    }
+
+    table tbody tr:hover {
+        background-color: var(--button-bg);
+    }
+
+    #pagination {
+        margin-top: 20px;
+        text-align: center;
+    }
+</style>
+
+<!-- Dark Mode Toggle Button -->
+<button id="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+
 <h1>{{ hotel_name }}</h1>
 
 <form method="post" id="calc-form">
@@ -9,6 +126,32 @@
 </form>
 
 <script>
+// Dark Mode Toggle Function
+function toggleTheme() {
+    const html = document.documentElement;
+    const body = document.body;
+    const isDarkMode = body.classList.toggle('dark-mode');
+    const themeToggle = document.getElementById('theme-toggle');
+    
+    // Update button text and icon
+    themeToggle.textContent = isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode';
+    
+    // Save preference to localStorage
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+}
+
+// Load saved theme preference on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isDarkMode = savedTheme === 'dark' || (savedTheme === null && prefersDark);
+    
+    if (isDarkMode) {
+        document.body.classList.add('dark-mode');
+        document.getElementById('theme-toggle').textContent = '☀️ Light Mode';
+    }
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     const corpSelect = document.querySelector('#id_corporation');
     if (!corpSelect) return;
@@ -42,13 +185,14 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 
-<table>
+<table id="price-table">
     <thead>
         <tr>
             <th>Booking Channel</th>
             <th>Total Cash Price</th>
             <th>Hotel Points Earned</th>
             <th>Credit Card Points Earned</th>
+            <th>Shopping Portal Rewards Earned</th>
             <th>Net Cost After Rebate</th>
         </tr>
     </thead>
@@ -58,3 +202,71 @@ document.addEventListener('DOMContentLoaded', function() {
         {% endfor %}
     </tbody>
 </table>
+
+<!-- Pagination Controls -->
+<div id="pagination" style="margin-top: 20px; text-align: center;">
+    <button id="prev-btn" onclick="prevPage()" style="padding: 8px 12px; margin: 0 5px;">← Previous</button>
+    <span id="page-info" style="margin: 0 15px;">Page 1</span>
+    <button id="next-btn" onclick="nextPage()" style="padding: 8px 12px; margin: 0 5px;">Next →</button>
+</div>
+
+<script>
+const ROWS_PER_PAGE = 15;  // Change this to show more/fewer rows per page
+let currentPage = 1;
+let totalPages = 1;
+
+document.addEventListener('DOMContentLoaded', function() {
+    initPagination();
+});
+
+function initPagination() {
+    const tableBody = document.querySelector('#price-table tbody');
+    const rows = tableBody.querySelectorAll('tr');
+    totalPages = Math.ceil(rows.length / ROWS_PER_PAGE);
+    
+    if (totalPages <= 1) {
+        // Hide pagination if only one page
+        document.querySelector('#pagination').style.display = 'none';
+        return;
+    }
+    
+    showPage(1);
+}
+
+function showPage(pageNum) {
+    const tableBody = document.querySelector('#price-table tbody');
+    const rows = tableBody.querySelectorAll('tr');
+    
+    // Hide all rows
+    rows.forEach(row => row.style.display = 'none');
+    
+    // Show rows for current page
+    const startIdx = (pageNum - 1) * ROWS_PER_PAGE;
+    const endIdx = startIdx + ROWS_PER_PAGE;
+    
+    for (let i = startIdx; i < endIdx && i < rows.length; i++) {
+        rows[i].style.display = '';
+    }
+    
+    currentPage = pageNum;
+    
+    // Update page info
+    document.querySelector('#page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+    
+    // Update button states
+    document.querySelector('#prev-btn').disabled = currentPage === 1;
+    document.querySelector('#next-btn').disabled = currentPage === totalPages;
+}
+
+function nextPage() {
+    if (currentPage < totalPages) {
+        showPage(currentPage + 1);
+    }
+}
+
+function prevPage() {
+    if (currentPage > 1) {
+        showPage(currentPage - 1);
+    }
+}
+</script>

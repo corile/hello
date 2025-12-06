@@ -61,3 +61,19 @@ class CreditCard(models.Model):
     everywhere_points_per_dollar = models.DecimalField(max_digits=5, decimal_places=3, null=False, blank=False)
     def __str__(self):
         return f"{self.card_name} ({self.bank.name})"
+    
+class CashbackPortal(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+    
+class PortalOffer(models.Model):
+    portal = models.ForeignKey(CashbackPortal, on_delete=models.CASCADE)
+    travel_agency = models.ForeignKey(TravelAgency, on_delete=models.CASCADE)
+    cashback_rate = models.DecimalField(max_digits=5, decimal_places=2)
+    terms_and_conditions = models.TextField(blank=True, null=True)
+    last_seen = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"[{self.last_seen}] {self.portal.name} - {self.travel_agency.name} Offer"
