@@ -138,3 +138,10 @@ LOGGING = {
         'level': 'DEBUG',
     },
 }
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://hotelstack.net',
+    'https://www.hotelstack.net', # Add www if you use it
+    # You may need to add the port number if you're developing locally, 
+    # but for production, these two lines should be enough.
+]
