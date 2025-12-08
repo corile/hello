@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-dnx92v2cw!0vc=81-=opb#1&gtl@_u1#m1q-k8ktprsen+z0l2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['178.128.188.148', 'hotelstack.net', 'www.hotelstack.net']
+ALLOWED_HOSTS = ['178.128.188.148', 'hotelstack.net', 'www.hotelstack.net', '127.0.0.1']
 
 
 # Application definition

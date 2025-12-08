@@ -29,4 +29,4 @@ class CalcForm(forms.Form):
     brand = forms.ChoiceField(label='Hotel Brand', choices=[])
     elite_status = forms.ChoiceField(label='Hotel Chain Elite Status', choices=[])
     nights = forms.IntegerField(label='Number of Nights', min_value=1)
-    cash_price = forms.DecimalField(label='Cash Price (USD)', min_value=0)
+    cash_price = forms.DecimalField(label='Cash Price Per Night (USD)', min_value=0)
