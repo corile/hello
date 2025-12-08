@@ -113,7 +113,6 @@ def calc (request):
                 'hotel_card.html',
                 {
                     'form': form,
-                    'hotel_name': f'{corporation_name} {brand}',
                     'price_options': sorted(price_options, key=lambda x: x['final_price_for_sorting'])
                 })
         else:
