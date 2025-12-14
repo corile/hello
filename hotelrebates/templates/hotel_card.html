@@ -108,6 +108,72 @@
         background-color: var(--button-bg);
     }
 
+    /* Info icon tooltip styles */
+    .info-icon {
+        display: inline-block;
+        margin-left: 8px;
+        width: 16px;
+        height: 16px;
+        line-height: 16px;
+        text-align: center;
+        border-radius: 50%;
+        background: var(--table-header-bg);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        font-size: 12px;
+        font-weight: 700;
+        cursor: default;
+        position: relative;
+    }
+
+    .info-icon:focus, .info-icon:hover {
+        background: var(--button-bg);
+        outline: none;
+    }
+
+    /* Tooltip element (DOM) replaces the ::after approach for better accessibility and JS control */
+    .info-icon .tooltip {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%) translateY(6px) scale(0.98);
+        bottom: calc(100% + 8px);
+        min-width: 200px;
+        max-width: 320px;
+        background: var(--button-bg);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        padding: 8px 10px;
+        border-radius: 6px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+        white-space: normal;
+        display: block; /* kept in flow but hidden via opacity/visibility */
+        z-index: 1000;
+        font-size: 12px;
+        text-align: left;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 160ms ease, transform 160ms ease, visibility 160ms;
+        transform-origin: 50% 100%;
+        pointer-events: none;
+    }
+
+    .info-icon:hover .tooltip,
+    .info-icon:focus .tooltip,
+    .info-icon.open .tooltip {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0) scale(1);
+        pointer-events: auto;
+    }
+
+    .info-icon .icon {
+        width: 14px;
+        height: 14px;
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+
     #pagination {
         margin-top: 20px;
         text-align: center;
@@ -116,6 +182,15 @@
 
 <!-- Dark Mode Toggle Button -->
 <button id="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+
+<!-- SVG sprite for icons (hidden) -->
+<svg aria-hidden="true" style="position: absolute; width: 0; height: 0; overflow: hidden;" focusable="false">
+    <symbol id="icon-question" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1" fill="none"/>
+        <path d="M9.09 9a3 3 0 1 1 5.82 1c0 2-3 3-3 3" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M12 17h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </symbol>
+</svg>
 
 <h2>Tell us about the hotel you are planning a stay at</h2>
 
@@ -184,16 +259,45 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-
 <table id="price-table">
     <thead>
         <tr>
-            <th>Booking Channel</th>
-            <th>Total Cash Price For All Nights</th>
-            <th>Hotel Points Earned</th>
-            <th>Credit Card Points Earned</th>
-            <th>Shopping Portal Rewards Earned</th>
-            <th>Net Cost After Rebate</th>
+            <th>Booking Channel
+                <span class="info-icon" tabindex="0" role="button" aria-label="Booking Channel info" aria-expanded="false">
+                    <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-question"></use></svg>
+                    <span class="tooltip" role="tooltip">Where the room is booked (hotel direct, online travel agency, metasearch, etc.).</span>
+                </span>
+            </th>
+            <th>Total Cash Price For All Nights
+                <span class="info-icon" tabindex="0" role="button" aria-label="Total cash price info" aria-expanded="false">
+                    <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-question"></use></svg>
+                    <span class="tooltip" role="tooltip">Total cash price for the entire stay before rebates, cashback, or portal rewards.</span>
+                </span>
+            </th>
+            <th>Hotel Points Earned
+                <span class="info-icon" tabindex="0" role="button" aria-label="Hotel points info" aria-expanded="false">
+                    <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-question"></use></svg>
+                    <span class="tooltip" role="tooltip">Loyalty program points awarded by the hotel for this stay (may vary by rate and elite status).</span>
+                </span>
+            </th>
+            <th>Credit Card Points Earned
+                <span class="info-icon" tabindex="0" role="button" aria-label="Credit card points info" aria-expanded="false">
+                    <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-question"></use></svg>
+                    <span class="tooltip" role="tooltip">Points or miles earned from the credit card used for the booking (per-card earn rates may apply).</span>
+                </span>
+            </th>
+            <th>Shopping Portal Rewards Earned
+                <span class="info-icon" tabindex="0" role="button" aria-label="Shopping portal rewards info" aria-expanded="false">
+                    <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-question"></use></svg>
+                    <span class="tooltip" role="tooltip">Cashback or points earned via shopping portals or affiliate portals when booking through that channel.</span>
+                </span>
+            </th>
+            <th>Net Cost After Rebate
+                <span class="info-icon" tabindex="0" role="button" aria-label="Net cost info" aria-expanded="false">
+                    <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-question"></use></svg>
+                    <span class="tooltip" role="tooltip">Final cash cost after subtracting cashback, portal rebates, or other discounts. Points are shown separately and not subtracted here.</span>
+                </span>
+            </th>
         </tr>
     </thead>
     <tbody>
@@ -269,4 +373,61 @@ function prevPage() {
         showPage(currentPage - 1);
     }
 }
+</script>
+
+<!-- Tooltip touch/click handling: keep tooltip open on tap, close on outside click; support keyboard toggling -->
+<script>
+document.addEventListener('click', function (ev) {
+    // If click is inside an info-icon, toggle it. Otherwise close all open tooltips.
+    const icon = ev.target.closest && ev.target.closest('.info-icon');
+    if (icon) {
+        // Toggle open state
+        const isOpen = icon.classList.contains('open');
+        // Close others
+        document.querySelectorAll('.info-icon.open').forEach(i => {
+            if (i !== icon) {
+                i.classList.remove('open');
+                i.setAttribute('aria-expanded', 'false');
+            }
+        });
+        if (isOpen) {
+            icon.classList.remove('open');
+            icon.setAttribute('aria-expanded', 'false');
+        } else {
+            icon.classList.add('open');
+            icon.setAttribute('aria-expanded', 'true');
+        }
+        // Prevent click from closing immediately
+        ev.stopPropagation();
+        return;
+    }
+
+    // Click elsewhere — close all
+    document.querySelectorAll('.info-icon.open').forEach(i => {
+        i.classList.remove('open');
+        i.setAttribute('aria-expanded', 'false');
+    });
+});
+
+// Close tooltips on Escape
+document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape' || ev.key === 'Esc') {
+        document.querySelectorAll('.info-icon.open').forEach(i => {
+            i.classList.remove('open');
+            i.setAttribute('aria-expanded', 'false');
+            i.blur();
+        });
+    }
+});
+
+// Keyboard toggle for Enter/Space on focused info icon
+document.addEventListener('keydown', function (ev) {
+    const active = document.activeElement;
+    if (!active || !active.classList) return;
+    if (!active.classList.contains('info-icon')) return;
+    if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        active.click();
+    }
+});
 </script>
