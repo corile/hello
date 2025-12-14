@@ -73,11 +73,11 @@ def calc (request):
                         price_options.append({
                             'booking_channel': travel_agency.name,
                             'cash_price': f'${float(cash_price) * nights:.2f}',
-                            'hotel_rebates_value': f'${hotel_rebates_value_in_cents / 100:.2f}',
-                            'hotel_rebates': f'({hotel_loyalty_points} {corporation_name} points)',
-                            'credit_card_rebates_value': f'${cc_rebates_value_in_cents / 100:.2f}',
-                            'credit_card_rebates': f'({cc_rebates} {credit_card.earn_currency.name} with {credit_card.card_name})',
-                            'shopping_portal_rebates_value':  f'${portal_rewards_in_cents / 100:.2f}',
+                            'hotel_rebates_value': f'(Points Value: ${hotel_rebates_value_in_cents / 100:.2f})',
+                            'hotel_rebates': f'{hotel_loyalty_points} {corporation_name} points',
+                            'credit_card_rebates_value': f'(Points value: ${cc_rebates_value_in_cents / 100:.2f})',
+                            'credit_card_rebates': f'{cc_rebates} {credit_card.earn_currency.name} with {credit_card.card_name}',
+                            'shopping_portal_rebates_value':  f'(Points value: ${portal_rewards_in_cents / 100:.2f})',
                             'shopping_portal_rebates': f'{portal_rewards} {portal.name} points',
                             'final_price': f'${final_price:.2f}',
                             'final_price_for_sorting': final_price
