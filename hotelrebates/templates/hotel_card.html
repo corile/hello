@@ -1,5 +1,3 @@
-{% block title %}HotelStack.net{% endblock %}
-
 <style>
     :root {
         --bg-color: #ffffff;
@@ -26,6 +24,7 @@
         color: var(--text-color);
         transition: background-color 0.3s, color 0.3s;
         font-family: Arial, sans-serif;
+        /* Brand is now part of the page flow, so use normal padding */
         padding: 16px;
     }
 
@@ -173,6 +172,27 @@
         vertical-align: middle;
     }
 
+    /* Site brand (top-left) */
+    #site-brand {
+        /* Keep the brand in the normal document flow (not fixed) */
+        position: static;
+        display: inline-block;
+        z-index: 10;
+        font-size: 32px;
+        font-weight: 900;
+        color: var(--text-color);
+        text-decoration: none;
+        background: transparent;
+        padding: 4px 6px;
+        margin-bottom: 8px;
+    }
+
+    /* Slightly smaller on narrow screens */
+    @media (max-width: 480px) {
+        #site-brand { font-size: 20px; left: 12px; top: 8px; }
+        #theme-toggle { top: 8px; right: 12px; }
+    }
+
 
     #pagination {
         margin-top: 20px;
@@ -181,6 +201,7 @@
 </style>
 
 <!-- Dark Mode Toggle Button -->
+<a id="site-brand" href="/" aria-label="Homepage">HotelStack.net</a>
 <button id="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
 
 <!-- SVG sprite for icons (hidden) -->
