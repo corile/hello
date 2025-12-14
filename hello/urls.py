@@ -16,9 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from hotelrebates import views as hotel_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('app/', include('firstapp.urls')),
     path('hotelrebates/', include('hotelrebates.urls')),
+    # Route the site root to the hotelrebates calc view
+    path('', hotel_views.calc, name='home'),
 ]
